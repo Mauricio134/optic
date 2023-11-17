@@ -9,7 +9,7 @@
 using namespace std;
 
 #define mxPoints 4
-#define eps 2.3
+#define eps 0.3
 
 class Point{
 public:
@@ -28,3 +28,5 @@ pair<vector<bool>, vector<double>> optical(const vector<Point> & );
 vector<Point> epsilonCluster(const Point &, const vector<Point> &);
 
 pair<set<Point>, vector<double>> updateQueue(const Point &, vector<Point> , const vector<bool> &, set<Point> , vector<double>, const vector<Point> &);
+
+vector<int> opticsCluster(const vector<bool> & ordering, const vector<double> &rd);

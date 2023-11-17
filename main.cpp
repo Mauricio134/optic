@@ -65,5 +65,12 @@ int main(){
 
     pair<vector<bool>, vector<double>> Optical = optical(dataSet);
 
+    vector<int> clusters = opticsCluster(Optical.first, Optical.second);
+
+    ofstream archivo("clusters.txt");
+
+    for(int i = 0; i < dataSet.size(); i++){
+        archivo << dataSet[i].data[0] << " " << dataSet[i].data[1] << " " << clusters[i] <<  endl;
+    }
     return 0;
 }

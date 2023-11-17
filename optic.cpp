@@ -9,8 +9,21 @@ double distanceEuclidian( const Point & p1 , const Point & p2 ){
     return distancia;
 }
 
-double coreDist(const Point & p){
-    return 1;
+double coreDist(const Point & p, const vector<Point> & neighbors){
+    double distancia = 0.0;
+    queue<double> puntosCore;
+    puntosCore.push(1e9);
+    for(int i = 1; i < neighbors.size(); i++){
+        double nuevaDistancia = distanceEuclidian(p, neighbors[i]);
+        if(nuevaDistancia < puntosCore.front()){
+            puntosCore.push(nuevaDistancia);
+            if(puntosCore.size() > mxPoints - 1){
+                puntosCore.pop();
+            }
+        }
+    }
+    distancia = puntosCore.back();
+    return distancia;
 }
 
 pair<vector<bool>, vector<double>> optical( const vector<Point> & dataSet ){
@@ -47,7 +60,7 @@ pair<set<Point>, vector<double>> updateQueue(const Point & p, vector<Point> neig
     }
     for(int i = 0; i < neighbors.size(); i++){
         if(ordering[neighbors[i].indice]) continue;
-        double newRDist = max(coreDist(p), distanceEuclidian(p,neighbors[i]));
+        double newRDist = max(coreDist(p, neighbors), distanceEuclidian(p,neighbors[i]));
         if(rd[neighbors[i].indice] == 0){
             rd[neighbors[i].indice] = newRDist;
             neighbors[i].RDist = newRDist;
@@ -74,4 +87,24 @@ vector<Point> epsilonCluster( const Point & p , const vector<Point> & puntos ){
         }
     }
     return groupEpsilon;
+}
+
+vector<int> opticsCluster(const vector<bool> & ordering, const vector<double> &rd){
+    vector<int> clusterIndices(rd.size(), -1);
+    int current = 0;
+    bool incrementCurrentIndex = false;
+    for(int i = 0; i < ordering.size(); i++){
+        if(rd[i] == 0.0 || rd[i] > eps){
+            incrementCurrentIndex = true;
+        }
+        else{
+            if(incrementCurrentIndex){
+                current = current + 1;
+                clusterIndices[i-1] = current;
+            }
+            clusterIndices[i] = current;
+            incrementCurrentIndex = false;
+        }
+    }
+    return clusterIndices;
 }
