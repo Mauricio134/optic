@@ -9,40 +9,44 @@ double distanceEuclidian( const Point & p1 , const Point & p2 ){
     return distancia;
 }
 
-double coreDist(const Point & p, const vector<Point> & neighbors){
-    double distancia = 0.0;
-    queue<double> puntosCore;
-    puntosCore.push(1e9);
-    for(int i = 1; i < neighbors.size(); i++){
-        double nuevaDistancia = distanceEuclidian(p, neighbors[i]);
-        if(nuevaDistancia < puntosCore.front()){
-            puntosCore.push(nuevaDistancia);
-            if(puntosCore.size() > mxPoints - 1){
-                puntosCore.pop();
-            }
-        }
-    }
-    distancia = puntosCore.back();
-    return distancia;
+double coreDist(const Point & p, nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, PointCloud>, PointCloud, dimension, size_t> & kdtree){
+    std::vector<size_t> indices_data(mxPoints-1);
+    std::vector<double> distances_data(mxPoints-1);
+
+    kdtree.knnSearch(p.data.data(), mxPoints-1, indices_data.data(), distances_data.data());
+    return distances_data[mxPoints-2];
 }
 
 pair<vector<bool>, vector<double>> optical( const vector<Point> & dataSet ){
+    PointCloud cloud;
+    for (const auto& point : dataSet) {
+        cloud.pts.push_back(point);
+    }
+    nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, PointCloud>, PointCloud, dimension, size_t> kdtree(dimension, cloud, nanoflann::KDTreeSingleIndexAdaptorParams(10 /* leaf max size */));
+    kdtree.buildIndex();
+
     vector<double> rDist( dataSet.size() );
     vector<bool> ordering( dataSet.size() );
     for( int i = 0 ; i < dataSet.size() ; i++ ){
         if(ordering[dataSet[i].indice]) continue;
         ordering[dataSet[i].indice] = 1;
-        vector<Point> neighbors = epsilonCluster( dataSet[i] , dataSet );
+        vector<Point> neighbors;
+        vector<nanoflann::ResultItem<size_t, double>> ret_matches;
+        const size_t nMatches = kdtree.radiusSearch(dataSet[i].data.data(), eps, ret_matches);
+
+        for(int i = 0; i < nMatches; i++){
+            neighbors.push_back(dataSet[ret_matches[i].first]);
+        }
         if ( neighbors.size() >= mxPoints ){
             set<Point> toProcess;
-            pair<set<Point>, vector<double>> result1 = updateQueue(dataSet[i],neighbors, ordering,toProcess,rDist, dataSet);
+            pair<set<Point>, vector<double>> result1 = updateQueue(dataSet[i],neighbors, ordering,toProcess,rDist, dataSet, kdtree);
             toProcess = result1.first;
             rDist = result1.second;
             while( !toProcess.empty() ){
                 Point q = *(toProcess.begin());
                 toProcess.erase(begin(toProcess));
                 ordering[q.indice] = 1;
-                pair<set<Point>, vector<double>> result2 = updateQueue(dataSet[i],vector<Point>(), ordering,toProcess,rDist, dataSet);
+                pair<set<Point>, vector<double>> result2 = updateQueue(dataSet[i],vector<Point>(), ordering,toProcess,rDist, dataSet, kdtree);
             }
         }
     }
@@ -50,9 +54,14 @@ pair<vector<bool>, vector<double>> optical( const vector<Point> & dataSet ){
     return make_pair( ordering , rDist );
 }
 
-pair<set<Point>, vector<double>> updateQueue(const Point & p, vector<Point> neighbors, const vector<bool> & ordering, set<Point> process, vector<double> rd, const vector<Point> & dataSet){
+pair<set<Point>, vector<double>> updateQueue(const Point & p, vector<Point> neighbors, const vector<bool> & ordering, set<Point> process, vector<double> rd, const vector<Point> & dataSet, nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, PointCloud>, PointCloud, dimension, size_t> & kdtree){
     if(neighbors.empty()){
-        neighbors = epsilonCluster( p , dataSet );
+        vector<nanoflann::ResultItem<size_t, double>> ret_matches;
+        const size_t nMatches = kdtree.radiusSearch(p.data.data(), eps, ret_matches);
+
+        for(int i = 0; i < nMatches; i++){
+            neighbors.push_back(dataSet[ret_matches[i].first]);
+        }
     }   
 
     if(neighbors.size() < mxPoints){
@@ -60,7 +69,7 @@ pair<set<Point>, vector<double>> updateQueue(const Point & p, vector<Point> neig
     }
     for(int i = 0; i < neighbors.size(); i++){
         if(ordering[neighbors[i].indice]) continue;
-        double newRDist = max(coreDist(p, neighbors), distanceEuclidian(p,neighbors[i]));
+        double newRDist = max(coreDist(p, kdtree), distanceEuclidian(p,neighbors[i]));
         if(rd[neighbors[i].indice] == 0){
             rd[neighbors[i].indice] = newRDist;
             neighbors[i].RDist = newRDist;
