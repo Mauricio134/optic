@@ -9,21 +9,14 @@ double distanceEuclidian( const Point & p1 , const Point & p2 ){
     return distancia;
 }
 
-double coreDist(const Point & p, const vector<Point> & neighbors){
-    double distancia = 0.0;
-    queue<double> puntosCore;
-    puntosCore.push(1e9);
-    for(int i = 1; i < neighbors.size(); i++){
-        double nuevaDistancia = distanceEuclidian(p, neighbors[i]);
-        if(nuevaDistancia < puntosCore.front()){
-            puntosCore.push(nuevaDistancia);
-            if(puntosCore.size() > mxPoints - 1){
-                puntosCore.pop();
-            }
-        }
+double coreDist(const Point & p, const vector<Point> & dataSet){
+    vector<double> puntosCore;
+    for(int i = 0; i < dataSet.size(); i++){
+        double nuevaDistancia = distanceEuclidian(p, dataSet[i]);
+        puntosCore.push_back(nuevaDistancia);
     }
-    distancia = puntosCore.back();
-    return distancia;
+    sort(puntosCore.begin(), puntosCore.end());
+    return puntosCore[mxPoints-1];
 }
 
 pair<vector<bool>, vector<double>> optical( const vector<Point> & dataSet ){
@@ -60,7 +53,7 @@ pair<set<Point>, vector<double>> updateQueue(const Point & p, vector<Point> neig
     }
     for(int i = 0; i < neighbors.size(); i++){
         if(ordering[neighbors[i].indice]) continue;
-        double newRDist = max(coreDist(p, neighbors), distanceEuclidian(p,neighbors[i]));
+        double newRDist = max(coreDist(p, dataSet), distanceEuclidian(p,neighbors[i]));
         if(rd[neighbors[i].indice] == 0){
             rd[neighbors[i].indice] = newRDist;
             neighbors[i].RDist = newRDist;
