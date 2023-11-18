@@ -10,7 +10,7 @@
 using namespace std;
 
 #define mxPoints 4
-#define eps 0.5
+#define eps 0.3
 
 class Point {
 public:
