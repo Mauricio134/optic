@@ -23,6 +23,7 @@ pair<vector<bool>, vector<double>> optical( const vector<Point> & dataSet ){
     vector<double> rDist( dataSet.size() );
     vector<bool> ordering( dataSet.size() );
     for( int i = 0 ; i < dataSet.size() ; i++ ){
+        cout << i << endl;
         if(ordering[dataSet[i].indice]) continue;
         ordering[dataSet[i].indice] = 1;
         vector<Point> neighbors = epsilonCluster( dataSet[i] , dataSet );
@@ -32,6 +33,7 @@ pair<vector<bool>, vector<double>> optical( const vector<Point> & dataSet ){
             toProcess = result1.first;
             rDist = result1.second;
             while( !toProcess.empty() ){
+                cout << -1 << endl;
                 Point q = *(toProcess.begin());
                 toProcess.erase(begin(toProcess));
                 ordering[q.indice] = 1;
