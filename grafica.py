@@ -4,7 +4,7 @@ import matplotlib.colors as mcolors
 
 nombre_archivo = "clusters.txt"
 
-colores_rgb = [mcolors.to_rgba(np.random.rand(3))[:3] for _ in range(600)]
+colores_rgb = [mcolors.to_rgba(np.random.rand(3))[:3] for _ in range(1000)]
 
 maximox = -1e9
 minimox = 1e9
