@@ -18,7 +18,7 @@ vector<Point> obtDataset(){
     getline(archivo, linea);
     int ind = 0;
     int count = 0;
-    while (getline(archivo, linea) && count < 100)
+    while (getline(archivo, linea) && count < 500)
     {
         Point punto;
         stringstream stream(linea);
