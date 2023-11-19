@@ -61,11 +61,17 @@ vector<Point> obtDataset(){
 }
 
 int main(){
+    auto start = std::chrono::high_resolution_clock::now();
     vector<Point> dataSet = obtDataset();
 
     pair<vector<bool>, vector<double>> Optical = optical(dataSet);
 
     vector<int> clusters = opticsCluster(Optical.first, Optical.second);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+    std::cout << "Tiempo de ejecucion: " << duration.count() << " microsegundos." << std::endl;
 
     ofstream archivo("clusters.txt");
 
